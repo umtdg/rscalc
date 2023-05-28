@@ -42,28 +42,30 @@ impl PartialEq for Assignment {
 
 impl fmt::Display for Assignment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {}: {:.2}",
+        write!(f, "{} {} ({}): {}",
             self.count.to_string().yellow(),
             capitalize_first(&self.name).magenta(),
-            self.total()
+            format!("{:.2}", self.weight * 100.0).green(),
+            format!("{:.2}", self.total()).cyan()
         )
     }
 }
 
 impl fmt::Debug for Assignment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name_titled = capitalize_first(self.name());
+        let name_capitalized = capitalize_first(self.name());
 
-        write!(f, "{}:\n", &name_titled)?;
-        for i in 0..self.grades.len() {
+        write!(
+            f, "{} ({}%):\n",
+            &name_capitalized.magenta().bold(),
+            format!("{:.2}", self.weight * 100.0).green()
+        )?;
+        for (i, grade) in self.grades.iter().enumerate() {
             write!(
-                f,
-                "  {} {}: {}\n",
-                &name_titled,
-                i + 1,
-                self.grades.get(i).unwrap()
+                f, "    {}: {} ({})\n",
+                format!("{} {}", &name_capitalized, i + 1).yellow(),
+                format!("{:.2}", grade).green(),
+                format!("{:.2}", grade * self.weight / self.count as f32).cyan()
             )?;
         }
 

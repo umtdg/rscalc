@@ -54,11 +54,15 @@ impl Course {
         (&self.assignments).into_iter().map(|(_, asmt)| asmt.total()).sum()
     }
 
-    pub fn show_assignments(&self) {
+    pub fn show_assignments(&self, show_asmt_grades: bool) {
         println!("{}", self);
 
         for asmt in (&self.assignments).values() {
-            println!("  {}", asmt);
+            if show_asmt_grades {
+                println!("  {:?}", asmt);
+            } else {
+                println!("  {}", asmt);
+            }
         }
 
         println!(
