@@ -1,8 +1,7 @@
-use std::process::exit;
-
 use clap::{Command, arg, ArgAction, ArgGroup, ArgMatches};
+use colored::Colorize;
 
-use crate::course::CourseList;
+use crate::course::{CourseList, Course};
 
 use super::root::course_list_arg;
 
@@ -10,6 +9,8 @@ pub fn show_command() -> Command {
     Command::new("show").alias("s")
         .about("Show grades of courses")
         .arg(arg!(-g --grades <GRADES>... "Show grades of assignments")
+            .action(ArgAction::SetTrue))
+        .arg(arg!(-t --total <TOTAL> "Show only total grade")
             .action(ArgAction::SetTrue))
         .arg(arg!(-a --all <ALL> "Show all courses")
             .action(ArgAction::SetTrue))
@@ -20,26 +21,42 @@ pub fn show_command() -> Command {
 
 pub fn show_run(matches: &ArgMatches, course_list: &mut CourseList) {
     let show_asmt_grades = matches.get_flag("grades");
-    if matches.get_flag("all") { show_all(course_list, show_asmt_grades) }
-    else { show_selected(matches, course_list, show_asmt_grades) }
-}
+    let show_total_only = matches.get_flag("total");
 
-fn show_all(course_list: &CourseList, show_asmt_grades: bool) {
-    (&course_list.0).into_iter().for_each(|(_, c)| {
-        c.show_assignments(show_asmt_grades);
-        println!()
-    });
-}
+    let courses: Vec<&Course> = if matches.get_flag("all") {
+        all_courses(course_list)
+    } else {
+        selected_courses(matches, course_list)
+    };
 
-fn show_selected(matches: &ArgMatches, course_list: &mut CourseList, show_asmt_grades: bool) {
-    for course_name in matches.get_many::<String>("COURSES").unwrap() {
-        let course = course_list.find_course(course_name);
-        if course.is_none() {
-            eprintln!("Course {} not found", course_name);
-            exit(1);
+    for course in courses {
+        if show_total_only {
+            println!(
+                "{}: {}", course,
+                format!("{:.2}", course.calculate_total()).green()
+            );
+        } else {
+            course.show_assignments(show_asmt_grades);
+            println!();
         }
-
-        course.unwrap().show_assignments(show_asmt_grades);
-        println!();
     }
+}
+
+fn all_courses<'a>(course_list: &'a CourseList) -> Vec<&'a Course> {
+    let mut sorted_courses: Vec<_> = (&course_list.0).into_iter().collect();
+    sorted_courses.sort_by(|a, b| a.1.cmp(b.1));
+    sorted_courses.iter().map(|(_, course)| *course).collect()
+}
+
+fn selected_courses<'a>(matches: &ArgMatches, course_list: &'a mut CourseList) -> Vec<&'a Course> {
+    let mut courses: Vec<&Course> = Vec::new();
+
+    // get all specified courses in matches from CourseList into courses
+    for course_name in matches.get_many::<String>("COURSES").unwrap() {
+        if let Some(course) = course_list.0.get(course_name) {
+            courses.push(course);
+        }
+    }
+
+    courses
 }
