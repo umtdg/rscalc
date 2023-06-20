@@ -40,6 +40,38 @@ impl PartialEq for Assignment {
     }
 }
 
+impl Eq for Assignment {
+    fn assert_receiver_is_total_eq(&self) {}
+}
+
+impl PartialOrd for Assignment {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self.grades.is_empty() == other.grades.is_empty() {
+            self.weight.partial_cmp(&other.weight)
+        } else if self.grades.is_empty() {
+            Some(std::cmp::Ordering::Greater)
+        } else if other.grades.is_empty() {
+            Some(std::cmp::Ordering::Less)
+        } else { // Never runs
+            self.weight.partial_cmp(&other.weight)
+        }
+    }
+}
+
+impl Ord for Assignment {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.grades.is_empty() == other.grades.is_empty() {
+            self.weight.total_cmp(&other.weight)
+        } else if self.grades.is_empty() {
+            std::cmp::Ordering::Greater
+        } else if other.grades.is_empty() {
+            std::cmp::Ordering::Less
+        } else { // Never runs
+            self.weight.total_cmp(&other.weight)
+        }
+    }
+}
+
 impl fmt::Display for Assignment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} ({}): {}",

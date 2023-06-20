@@ -23,6 +23,18 @@ impl Eq for Course {
     fn assert_receiver_is_total_eq(&self) {}
 }
 
+impl PartialOrd for Course {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.name.partial_cmp(&other.name)
+    }
+}
+
+impl Ord for Course {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.name.cmp(&other.name)
+    }
+}
+
 impl fmt::Display for Course {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name.to_uppercase().bold().blue())
@@ -57,11 +69,14 @@ impl Course {
     pub fn show_assignments(&self, show_asmt_grades: bool) {
         println!("{}", self);
 
-        for asmt in (&self.assignments).values() {
+        let mut assignments: Vec<_> = (&self.assignments).iter().collect();
+        assignments.sort_by(|a, b| a.1.cmp(b.1));
+
+        for asmt in assignments {
             if show_asmt_grades {
-                println!("  {:?}", asmt);
+                println!("  {:?}", asmt.1);
             } else {
-                println!("  {}", asmt);
+                println!("  {}", asmt.1);
             }
         }
 
